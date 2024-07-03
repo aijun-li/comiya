@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import type { HTMLAttributes } from 'vue';
-import { Primitive, type PrimitiveProps } from 'radix-vue';
-import { type ButtonVariants, buttonVariants } from '.';
 import { cn } from '@/utils';
+import { ReloadIcon } from '@radix-icons/vue';
+import { Primitive, type PrimitiveProps } from 'radix-vue';
+import type { HTMLAttributes } from 'vue';
+import { buttonVariants, type ButtonVariants } from '.';
 
 interface Props extends PrimitiveProps {
   variant?: ButtonVariants['variant'];
   size?: ButtonVariants['size'];
   class?: HTMLAttributes['class'];
+  disabled?: boolean;
+  loading?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -16,7 +19,13 @@ const props = withDefaults(defineProps<Props>(), {
 </script>
 
 <template>
-  <Primitive :as="as" :as-child="asChild" :class="cn(buttonVariants({ variant, size }), props.class)">
+  <Primitive
+    :as="as"
+    :as-child="asChild"
+    :class="cn(buttonVariants({ variant, size }), props.class)"
+    :disabled="disabled || loading"
+  >
+    <ReloadIcon v-if="loading" class="w-4 h-4 mr-2 animate-spin" />
     <slot />
   </Primitive>
 </template>

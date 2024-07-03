@@ -1,11 +1,11 @@
-import Home from '@/views/Home.vue';
+import Search from '@/views/Search.vue';
 import { RouteRecordRaw, createRouter, createWebHistory } from 'vue-router';
 
 export const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'login',
-    component: Home,
+    component: Search,
   },
 ];
 
