@@ -1,0 +1,8 @@
+echo "============ Check Frontend ============"
+npx lint-staged --verbose
+
+echo "============ Check Rust ============"
+cd ./packages/backend && cargo fmt --check
+echo "Pass"
+
+echo "============ Check Done ============"
