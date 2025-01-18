@@ -13,6 +13,7 @@ const { data } = useQuery({
   queryKey: [searchComic.name, debounced],
   queryFn: () => searchComic({ keyword: debounced.value }),
   placeholderData: (prev) => prev,
+  staleTime: Infinity,
   enabled: () => Boolean(debounced.value.trim()),
 });
 
@@ -22,7 +23,7 @@ const comics = computed(() => data.value || []);
 <template>
   <div class="flex h-full w-full flex-col items-center px-12 py-16">
     <div class="transition-all duration-300" :class="[comics.length ? 'h-0' : 'h-1/4']" />
-    <div class="flex w-1/2 flex-col items-center gap-8">
+    <div class="flex w-4/5 max-w-[600px] flex-col items-center gap-8">
       <div class="text-5xl font-semibold">Comiya</div>
       <Input v-model="keyword" autofocus />
     </div>

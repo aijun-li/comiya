@@ -1,5 +1,7 @@
-import { get } from './fetch';
+import { get, post } from './fetch';
 import type {
+  CheckPasswordReq,
+  CheckPasswordResp,
   GetChapterReq,
   GetChapterResp,
   GetComicReq,
@@ -23,4 +25,8 @@ export function getChapter(params: GetChapterReq): Promise<GetChapterResp> {
 
 export function proxyImage(url: string) {
   return `${Endpoints.ProxyImage}?url=${encodeURIComponent(url)}`;
+}
+
+export function checkPassword(data: CheckPasswordReq): Promise<CheckPasswordResp> {
+  return post(Endpoints.CheckPassword, data);
 }

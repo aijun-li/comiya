@@ -8,5 +8,6 @@ pub async fn run() {
     let app = get_router();
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();
+    tracing::info!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.unwrap();
 }

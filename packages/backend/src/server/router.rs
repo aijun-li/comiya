@@ -1,28 +1,34 @@
+use std::env;
+
 use axum::{
     body::Body,
     extract::Query,
     middleware::from_fn,
     response::IntoResponse,
-    routing::{get, MethodRouter},
+    routing::{get, post, MethodRouter},
     Json, Router,
 };
 use tower_http::services::{ServeDir, ServeFile};
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     server::types::AppResult,
     site::{Comic, ComicBrief, ComicChapter, Manhuagui, Site},
 };
 
-use super::middleware::wrap_response_middleware;
+use super::middleware::{password_validate_middleware, wrap_response_middleware};
 
 pub fn get_router() -> Router {
-    let api_router = Router::new()
+    let auth_api_router = Router::new()
         .merge(search_comic())
         .merge(get_comic())
         .merge(get_chapter())
         .merge(proxy_image())
+        .layer(from_fn(password_validate_middleware));
+
+    let api_router = auth_api_router
+        .merge(check_password())
         .layer(from_fn(wrap_response_middleware));
 
     let serve_dir = ServeDir::new("dist").fallback(ServeFile::new("dist/index.html"));
@@ -90,6 +96,21 @@ fn proxy_image() -> Router {
     route("/proxy_image", get(handler))
 }
 
+fn check_password() -> Router {
+    async fn handler(
+        Json(CheckPasswordData { password }): Json<CheckPasswordData>,
+    ) -> AppResult<Json<CheckPasswordResp>> {
+        let coconfigured_password = env::var("PASSWORD").unwrap_or("".to_string());
+        let configured_password = coconfigured_password.trim();
+
+        Ok(Json(CheckPasswordResp {
+            valid: configured_password.is_empty() || password.trim() == configured_password,
+        }))
+    }
+
+    route("/check_password", post(handler))
+}
+
 fn route(path: &str, method_router: MethodRouter<()>) -> Router {
     Router::new().route(path, method_router)
 }
@@ -117,4 +138,16 @@ struct GetChapterImagesQuery {
 #[serde(rename_all = "camelCase")]
 struct ProxyImageQuery {
     url: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct CheckPasswordData {
+    password: String,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct CheckPasswordResp {
+    valid: bool,
 }

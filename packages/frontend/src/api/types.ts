@@ -5,6 +5,7 @@ export enum Endpoints {
   GetComic = `${EndpointPrefix}/get_comic`,
   GetChapter = `${EndpointPrefix}/get_chapter`,
   ProxyImage = `${EndpointPrefix}/proxy_image`,
+  CheckPassword = `${EndpointPrefix}/check_password`,
 }
 
 export interface ComicBrief {
@@ -56,3 +57,11 @@ export type GetChapterReq = {
 };
 
 export type GetChapterResp = ComicChapter;
+
+export type CheckPasswordReq = {
+  password: string;
+};
+
+export type CheckPasswordResp = {
+  valid: boolean;
+};
