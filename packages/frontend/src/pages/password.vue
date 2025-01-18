@@ -10,7 +10,7 @@ import { ref, watchEffect } from 'vue';
 const input = ref('');
 const debounced = useDebounce(input, 800);
 
-const { data, isLoading } = useQuery({
+const { data, isFetching } = useQuery({
   queryKey: [checkPassword.name, 'input', debounced],
   queryFn: () => checkPassword({ password: debounced.value }),
   enabled: () => Boolean(debounced.value),
@@ -33,7 +33,7 @@ watchEffect(() => {
   <div class="flex h-full w-full items-center justify-center">
     <div class="flex w-4/5 max-w-[500px] flex-col gap-2 rounded px-12 pb-8 pt-6 shadow-md">
       <Label class="font-semibold" :class="{ 'text-red-500': invalid }">Password</Label>
-      <Input v-model="input" autofocus :disabled="isLoading" @update:model-value="invalid = false" />
+      <Input v-model="input" autofocus :disabled="isFetching" @update:model-value="invalid = false" />
     </div>
   </div>
 </template>

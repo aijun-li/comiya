@@ -15,6 +15,9 @@ export default [
   {
     files: ['**/*.vue'],
     languageOptions: {
+      globals: {
+        definePage: 'readonly',
+      },
       parserOptions: {
         parser: tseslint.parser,
       },

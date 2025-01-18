@@ -6,6 +6,7 @@ import { LoaderCircle } from 'lucide-vue-next';
 import { watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { checkPassword } from './api';
+import { ScrollArea } from './components/ui/scroll-area';
 
 const { password } = useGlobalStore();
 
@@ -21,7 +22,6 @@ watch(data, () => {
     return;
   }
   if (data.value.valid) {
-    router.replace('/search');
     cookies.set('comiya-password', password.value);
   } else {
     router.replace('/password');
@@ -30,10 +30,14 @@ watch(data, () => {
 </script>
 
 <template>
-  <div class="h-screen w-screen">
+  <ScrollArea class="h-screen w-screen" type="scroll">
     <div v-if="isPending" class="flex h-full w-full items-center justify-center">
-      <LoaderCircle class="animate-spin" :size="36" />
+      <LoaderCircle class="animate-spin" />
     </div>
-    <RouterView v-else />
-  </div>
+    <RouterView v-else v-slot="{ Component }" :key="$route.fullPath">
+      <KeepAlive>
+        <component :is="Component" />
+      </KeepAlive>
+    </RouterView>
+  </ScrollArea>
 </template>
