@@ -115,7 +115,7 @@ onKeyStroke(['ArrowUp', 'ArrowLeft'], (e) => {
       <LazyImage
         v-for="(image, index) in images"
         :key="image"
-        class="h-screen w-screen snap-start object-contain"
+        class="h-dvh w-dvw snap-start object-contain"
         :src="proxyImage(image)"
         :index
         :active-index="activeIndex[0]"

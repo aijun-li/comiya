@@ -34,7 +34,7 @@ watch(data, () => {
 </script>
 
 <template>
-  <ScrollArea class="h-screen w-screen" type="scroll">
+  <ScrollArea class="h-dvh w-dvw" type="scroll">
     <div v-if="isPending" class="flex h-full w-full items-center justify-center">
       <LoaderCircle class="animate-spin" />
     </div>
