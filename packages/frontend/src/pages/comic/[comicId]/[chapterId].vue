@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { getChapter, proxyImage } from '@/api';
 import LazyImage from '@/components/LazyImage.vue';
+import PageSwitchMask from '@/components/PageSwitchMask.vue';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Slider } from '@/components/ui/slider';
 import { LocalStorageKey } from '@/types/const';
@@ -57,6 +58,8 @@ tipShowed.value = true;
 
 const hasNext = computed(() => Boolean(data.value?.nextId && data.value.nextId !== '0'));
 const hasPrev = computed(() => Boolean(data.value?.prevId && data.value.prevId !== '0'));
+
+const gestureReverse = ref(false);
 
 function toPreviousChapter() {
   if (hasPrev.value) {
@@ -173,9 +176,11 @@ onKeyStroke(['ArrowUp', 'ArrowLeft'], (e) => {
             </div>
             <div
               class="operation-btn"
+              :class="{ '-scale-x-[1]': gestureReverse }"
               @click="
                 maskShow = false;
                 tipShow = true;
+                gestureReverse = !gestureReverse;
               "
             >
               <Pointer />
@@ -203,35 +208,22 @@ onKeyStroke(['ArrowUp', 'ArrowLeft'], (e) => {
       </div>
     </div>
 
-    <div
+    <PageSwitchMask
       v-else
-      class="fixed inset-0 z-10 flex flex-col"
-      :class="{ 'opacity-0': !tipShow }"
+      :show-tip="tipShow"
+      :reverse="gestureReverse"
+      @next-page="toNextPage"
+      @prev-page="toPrevPage"
+      @open-menu="maskShow = true"
       @click="
         tipShowed = true;
         tipShow = false;
       "
-    >
-      <div class="click-tip-bg h-1/6 bg-yellow-400" @click="toPrevPage"></div>
-      <div class="flex flex-1">
-        <div class="click-tip click-tip-bg bg-yellow-400" @click="toPrevPage">上一页</div>
-        <div class="click-tip click-tip-bg bg-cyan-400" @click="maskShow = true">菜单</div>
-        <div class="click-tip click-tip-bg bg-orange-400" @click="toNextPage">下一页</div>
-      </div>
-      <div class="click-tip-bg h-1/6 bg-orange-400" @click="toNextPage"></div>
-    </div>
+    />
   </ScrollArea>
 </template>
 
 <style scoped>
-.click-tip {
-  @apply flex flex-1 items-center justify-center text-2xl font-semibold text-white [writing-mode:vertical-lr];
-}
-
-.click-tip-bg {
-  @apply bg-opacity-80;
-}
-
 .operation-btn {
   @apply flex flex-col items-center gap-1 px-4 py-2;
 }
