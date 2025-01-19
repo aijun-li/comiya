@@ -4,7 +4,7 @@ import ChapterGestureMask from '@/components/ChapterGestureMask.vue';
 import LazyImage from '@/components/LazyImage.vue';
 import { Slider } from '@/components/ui/slider';
 import { LocalStorageKey } from '@/types/const';
-import { useQuery } from '@tanstack/vue-query';
+import { useQuery, useQueryClient } from '@tanstack/vue-query';
 import { onKeyStroke, useDebounceFn, useLocalStorage } from '@vueuse/core';
 import {
   ArrowLeftToLine,
@@ -15,7 +15,7 @@ import {
   Pointer,
   Settings,
 } from 'lucide-vue-next';
-import { computed, ref, useTemplateRef } from 'vue';
+import { computed, ref, useTemplateRef, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 const route = useRoute('/comic/[comicId]/[chapterId]');
@@ -24,7 +24,7 @@ const router = useRouter();
 const comicId = computed(() => route.params.comicId);
 const chapterId = computed(() => route.params.chapterId);
 
-const { data } = useQuery({
+const { data, isFetching } = useQuery({
   queryKey: [getChapter.name, comicId, chapterId],
   queryFn: () => getChapter({ comicId: comicId.value, chapterId: chapterId.value }),
   staleTime: Infinity,
@@ -37,6 +37,11 @@ const hasPrev = computed(() => Boolean(data.value?.prevId && data.value.prevId !
 
 const activeIndex = ref([0]);
 const tempIndex = ref([0]);
+
+watch(chapterId, () => {
+  activeIndex.value = [0];
+  tempIndex.value = [0];
+});
 
 const listRef = useTemplateRef('list-container');
 
@@ -124,6 +129,29 @@ onKeyStroke(['ArrowDown', 'ArrowRight'], (e) => {
 onKeyStroke(['ArrowUp', 'ArrowLeft'], (e) => {
   e.preventDefault();
   toPrevPage();
+});
+
+// pre cache next chapter
+const queryClient = useQueryClient();
+const toEndDistance = computed(() => {
+  if (!data.value || isFetching.value || !hasNext.value) {
+    return Infinity;
+  }
+  return Math.abs(activeIndex.value[0] - (images.value.length - 1));
+});
+watch(toEndDistance, () => {
+  if (toEndDistance.value < 5 && data.value) {
+    queryClient.prefetchQuery({
+      queryKey: [getChapter.name, comicId.value, data.value.nextId],
+      queryFn: () =>
+        getChapter({
+          comicId: comicId.value,
+          chapterId: data.value.nextId,
+        }),
+      staleTime: Infinity,
+      gcTime: Infinity,
+    });
+  }
 });
 </script>
 

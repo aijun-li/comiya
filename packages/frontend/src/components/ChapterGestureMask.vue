@@ -98,7 +98,6 @@ onUnmounted(() => {
       <div class="click-bg-next flex-grow-[2]"></div>
     </div>
   </div>
-  {{ showTip ? 'yes' : 'false' }}
 </template>
 
 <style scoped>
