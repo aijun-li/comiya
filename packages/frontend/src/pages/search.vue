@@ -14,7 +14,6 @@ const { data, isFetching } = useQuery({
   queryKey: [searchComic.name, debounced],
   queryFn: () => searchComic({ keyword: debounced.value }),
   placeholderData: (prev) => prev,
-  staleTime: Infinity,
   enabled: () => Boolean(debounced.value.trim()),
 });
 

@@ -4,12 +4,13 @@ import { useQuery } from '@tanstack/vue-query';
 import cookies from 'js-cookie';
 import { LoaderCircle } from 'lucide-vue-next';
 import { watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { checkPassword } from './api';
 import { ScrollArea } from './components/ui/scroll-area';
 
 const { password } = useGlobalStore();
 
+const route = useRoute();
 const router = useRouter();
 
 const { data, isPending } = useQuery({
@@ -23,6 +24,9 @@ watch(data, () => {
   }
   if (data.value.valid) {
     cookies.set('comiya-password', password.value);
+    if (route.name === '/password') {
+      router.replace('/');
+    }
   } else {
     router.replace('/password');
   }
@@ -34,9 +38,9 @@ watch(data, () => {
     <div v-if="isPending" class="flex h-full w-full items-center justify-center">
       <LoaderCircle class="animate-spin" />
     </div>
-    <RouterView v-else v-slot="{ Component }" :key="$route.fullPath">
+    <RouterView v-else v-slot="{ Component }">
       <KeepAlive>
-        <component :is="Component" />
+        <component :is="Component" :key="$route.fullPath" />
       </KeepAlive>
     </RouterView>
   </ScrollArea>

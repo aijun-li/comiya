@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { inject, onMounted, onUnmounted, ref, useTemplateRef, watchEffect } from 'vue';
-import { injectionKey } from './types';
+import { onMounted, onUnmounted, ref, useTemplateRef, watchEffect } from 'vue';
 
 const props = withDefaults(
   defineProps<{
     src: string;
     index: number;
     offset?: number;
+    activeIndex: number;
   }>(),
   {
     offset: 5,
@@ -17,14 +17,12 @@ const emit = defineEmits<{
   activated: [];
 }>();
 
-const { activeIndex, updateActiveIndex } = inject(injectionKey)!;
-
 const realSrc = ref<string>();
 
 const elRef = useTemplateRef<HTMLImageElement>('image-ref');
 
 watchEffect(() => {
-  if (!realSrc.value && Math.abs(activeIndex.value - props.index) <= props.offset) {
+  if (!realSrc.value && Math.abs(props.activeIndex - props.index) <= props.offset) {
     realSrc.value = props.src;
   }
 });
@@ -32,7 +30,6 @@ watchEffect(() => {
 const observer = new IntersectionObserver(
   ([entry]) => {
     if (entry.isIntersecting) {
-      updateActiveIndex(props.index);
       emit('activated');
     }
   },
