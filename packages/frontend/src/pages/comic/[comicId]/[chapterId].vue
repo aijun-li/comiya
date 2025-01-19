@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { getChapter, proxyImage } from '@/api';
+import ChapterGestureMask from '@/components/ChapterGestureMask.vue';
 import LazyImage from '@/components/LazyImage.vue';
-import PageSwitchMask from '@/components/PageSwitchMask.vue';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Slider } from '@/components/ui/slider';
 import { LocalStorageKey } from '@/types/const';
 import { useQuery } from '@tanstack/vue-query';
-import { onKeyStroke, useLocalStorage } from '@vueuse/core';
+import { onKeyStroke, useDebounceFn, useLocalStorage } from '@vueuse/core';
 import {
   ArrowLeftToLine,
   ArrowRightToLine,
@@ -33,6 +32,8 @@ const { data } = useQuery({
 });
 
 const images = computed(() => data.value?.images || []);
+const hasNext = computed(() => Boolean(data.value?.nextId && data.value.nextId !== '0'));
+const hasPrev = computed(() => Boolean(data.value?.prevId && data.value.prevId !== '0'));
 
 const activeIndex = ref([0]);
 const tempIndex = ref([0]);
@@ -50,42 +51,69 @@ function onSlideEnd(index: number[]) {
   pageNavShow.value = false;
 }
 
-const maskShow = ref(false);
+const controlMaskShow = ref(false);
 
-const tipShowed = useLocalStorage(LocalStorageKey.ClickTipShowed, false);
-const tipShow = ref(!tipShowed.value);
-tipShowed.value = true;
-
-const hasNext = computed(() => Boolean(data.value?.nextId && data.value.nextId !== '0'));
-const hasPrev = computed(() => Boolean(data.value?.prevId && data.value.prevId !== '0'));
-
+const gestureTipShowed = useLocalStorage(LocalStorageKey.GestureTipShowed, false);
+const showGestureTip = ref(!gestureTipShowed.value);
 const gestureReverse = ref(false);
+gestureTipShowed.value = true;
 
-function toPreviousChapter() {
-  if (hasPrev.value) {
-    router.replace(`/comic/${comicId.value}/${data.value!.prevId}`);
-  }
-}
-
-function toNextChapter() {
-  if (hasNext.value) {
-    router.replace(`/comic/${comicId.value}/${data.value!.nextId}`);
-  }
-}
+const showNextTip = ref(false);
+const resetNextTip = useDebounceFn(() => {
+  showNextTip.value = false;
+}, 2000);
+const showPrevTip = ref(false);
+const resetPrevTip = useDebounceFn(() => {
+  showPrevTip.value = false;
+}, 2000);
 
 function scrollToPage(index: number) {
-  (listRef.value?.$el as HTMLDivElement).firstElementChild?.scrollTo({
+  listRef.value?.scrollTo({
     top: window.innerHeight * Math.min(images.value.length - 1, Math.max(0, index)),
     behavior: 'instant',
   });
 }
 
 function toNextPage() {
-  scrollToPage(activeIndex.value[0] + 1);
+  const currentPage = activeIndex.value[0];
+  if (currentPage === images.value.length - 1) {
+    if (!showNextTip.value) {
+      showNextTip.value = true;
+      resetNextTip();
+    } else if (hasNext.value) {
+      toNextChapter();
+      showNextTip.value = false;
+    }
+  } else {
+    scrollToPage(activeIndex.value[0] + 1);
+  }
 }
 
 function toPrevPage() {
-  scrollToPage(activeIndex.value[0] - 1);
+  const currentPage = activeIndex.value[0];
+  if (currentPage === 0) {
+    if (!showPrevTip.value) {
+      showPrevTip.value = true;
+      resetPrevTip();
+    } else if (hasPrev.value) {
+      toPreviousChapter();
+      showPrevTip.value = false;
+    }
+  } else {
+    scrollToPage(activeIndex.value[0] - 1);
+  }
+}
+
+function toPreviousChapter() {
+  if (hasPrev.value && data.value) {
+    router.replace(`/comic/${comicId.value}/${data.value.prevId}`);
+  }
+}
+
+function toNextChapter() {
+  if (hasNext.value && data.value) {
+    router.replace(`/comic/${comicId.value}/${data.value.nextId}`);
+  }
 }
 
 onKeyStroke(['ArrowDown', 'ArrowRight'], (e) => {
@@ -104,12 +132,10 @@ onKeyStroke(['ArrowUp', 'ArrowLeft'], (e) => {
     <LoaderCircle class="animate-spin" />
   </div>
 
-  <ScrollArea
+  <div
     v-else
     ref="list-container"
-    class="h-full w-full"
-    viewport-class="snap-y snap-mandatory relative outline-none"
-    type="scroll"
+    class="scrollbar-hidden relative h-full w-full snap-y snap-mandatory overflow-auto outline-none"
   >
     <div>
       <LazyImage
@@ -126,7 +152,10 @@ onKeyStroke(['ArrowUp', 'ArrowLeft'], (e) => {
       />
     </div>
 
-    <div v-if="maskShow" class="fixed inset-0 z-10 flex flex-col justify-between bg-black bg-opacity-40">
+    <div
+      v-if="controlMaskShow"
+      class="fixed inset-0 z-10 flex flex-col justify-between overscroll-contain bg-black bg-opacity-40"
+    >
       <div class="flex h-12 items-center bg-zinc-900 text-white">
         <div class="p-2" @click="router.go(-1)">
           <ChevronLeft :size="28" />
@@ -137,13 +166,13 @@ onKeyStroke(['ArrowUp', 'ArrowLeft'], (e) => {
       <div
         class="flex-1"
         @click="
-          maskShow = false;
+          controlMaskShow = false;
           pageNavShow = false;
         "
       />
 
-      <div class="relative p-4 text-white">
-        <div class="rounded-lg bg-zinc-900 bg-opacity-20 shadow-lg backdrop-blur-md">
+      <div class="relative flex justify-center p-4 text-white">
+        <div class="w-full max-w-[800px] rounded-lg bg-zinc-900 bg-opacity-20 shadow-lg backdrop-blur-md">
           <div class="flex w-full items-center">
             <div
               class="p-4"
@@ -178,8 +207,8 @@ onKeyStroke(['ArrowUp', 'ArrowLeft'], (e) => {
               class="operation-btn"
               :class="{ '-scale-x-[1]': gestureReverse }"
               @click="
-                maskShow = false;
-                tipShow = true;
+                controlMaskShow = false;
+                showGestureTip = true;
                 gestureReverse = !gestureReverse;
               "
             >
@@ -188,8 +217,8 @@ onKeyStroke(['ArrowUp', 'ArrowLeft'], (e) => {
             <div
               class="operation-btn"
               @click="
-                maskShow = false;
-                tipShow = true;
+                controlMaskShow = false;
+                showGestureTip = true;
               "
             >
               <BookOpenText />
@@ -208,23 +237,38 @@ onKeyStroke(['ArrowUp', 'ArrowLeft'], (e) => {
       </div>
     </div>
 
-    <PageSwitchMask
+    <ChapterGestureMask
       v-else
-      :show-tip="tipShow"
+      :show-tip="showGestureTip"
       :reverse="gestureReverse"
       @next-page="toNextPage"
       @prev-page="toPrevPage"
-      @open-menu="maskShow = true"
+      @open-menu="controlMaskShow = true"
       @click="
-        tipShowed = true;
-        tipShow = false;
+        gestureTipShowed = true;
+        showGestureTip = false;
       "
     />
-  </ScrollArea>
+
+    <div
+      v-if="showPrevTip || showNextTip"
+      class="fixed left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 rounded bg-black bg-opacity-30 px-2 py-1 text-white backdrop-blur-sm"
+    >
+      {{
+        showPrevTip
+          ? hasPrev
+            ? '👆 再次点击前往上一章'
+            : '😭 没有上一章了'
+          : hasNext
+            ? '👇 再次点击前往下一章'
+            : '😭 没有下一章了'
+      }}
+    </div>
+  </div>
 </template>
 
 <style scoped>
 .operation-btn {
-  @apply flex flex-col items-center gap-1 px-4 py-2;
+  @apply flex cursor-pointer flex-col items-center gap-1 px-4 py-2;
 }
 </style>
