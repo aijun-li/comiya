@@ -38,9 +38,13 @@ const hasPrev = computed(() => Boolean(data.value?.prevId && data.value.prevId !
 const activeIndex = ref([0]);
 const tempIndex = ref([0]);
 
-watch(chapterId, () => {
+watch([comicId, chapterId], () => {
   activeIndex.value = [0];
   tempIndex.value = [0];
+  listRef.value?.scrollTo({
+    top: 0,
+    behavior: 'instant',
+  });
 });
 
 const listRef = useTemplateRef('list-container');

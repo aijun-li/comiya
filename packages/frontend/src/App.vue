@@ -40,7 +40,7 @@ watch(data, () => {
     </div>
     <RouterView v-else v-slot="{ Component }">
       <KeepAlive>
-        <component :is="Component" :key="$route.fullPath" />
+        <component :is="Component" />
       </KeepAlive>
     </RouterView>
   </ScrollArea>

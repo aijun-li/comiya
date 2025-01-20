@@ -33,7 +33,7 @@ const comics = computed(() => data.value || []);
 
     <div class="mt-12 grid max-w-[1200px] grid-cols-2 gap-8 sm:grid-cols-4 md:grid-cols-5">
       <RouterLink v-for="comic in comics" :key="comic.id" class="w-full cursor-pointer" :to="`/comic/${comic.id}`">
-        <img class="w-full rounded-sm shadow-lg" :src="comic.cover" />
+        <img class="aspect-[3/4] w-full rounded-sm shadow-lg" :src="comic.cover" />
         <div class="mt-2 truncate">{{ comic.name }}</div>
       </RouterLink>
     </div>

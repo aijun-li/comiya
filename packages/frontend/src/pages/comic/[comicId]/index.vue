@@ -46,7 +46,7 @@ watch(
 
     <div class="max-w-[1200px]">
       <div class="flex flex-col gap-4 sm:flex-row">
-        <img :src="comic.cover" class="max-w-[50%] self-start object-contain" />
+        <img :src="comic.cover" class="aspect-[3/4] max-w-[50%] self-start object-contain" />
         <div>
           <div class="text-xl font-semibold">{{ comic.name }}</div>
           <div class="mt-2 text-sm">{{ comic.pubDate }}</div>
