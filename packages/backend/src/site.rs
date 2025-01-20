@@ -69,7 +69,7 @@ impl Site for Manhuagui {
             .text()
             .await?;
 
-        let doc = Document::from(body);
+        let mut doc = Document::from(body);
 
         let brief = parse_brief(
             &doc.select_single("body"),
@@ -82,6 +82,20 @@ impl Site for Manhuagui {
             },
             id.clone(),
         );
+
+        // check if there are hidden content due to audition
+        let hidden_input = doc.select(r#"#erroraudit_show + input[type="hidden"]"#);
+        if hidden_input.exists() {
+            let encoded = hidden_input.attr_or("value", "");
+            let decoded = lz_str::decompress_from_base64(&encoded)
+                .ok_or(0)
+                .map(|s| String::from_utf16(&s).unwrap_or("".to_string()))
+                .unwrap_or("".to_string());
+
+            if !decoded.is_empty() {
+                doc = Document::fragment(decoded);
+            }
+        }
 
         let chapter_groups = doc
             .select("h4:has(~ .chapter-list")
