@@ -3,7 +3,7 @@ import { searchComic } from '@/api';
 import { Input } from '@/components/ui/input';
 import { useQuery } from '@tanstack/vue-query';
 import { useDebounce } from '@vueuse/core';
-import { LoaderCircle } from 'lucide-vue-next';
+import { History, LoaderCircle } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import { RouterLink } from 'vue-router';
 
@@ -37,5 +37,9 @@ const comics = computed(() => data.value || []);
         <div class="mt-2 truncate">{{ comic.name }}</div>
       </RouterLink>
     </div>
+
+    <RouterLink class="fixed right-6 top-6 p-2" to="/history">
+      <History />
+    </RouterLink>
   </div>
 </template>

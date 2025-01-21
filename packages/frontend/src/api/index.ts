@@ -6,8 +6,10 @@ import type {
   GetChapterResp,
   GetComicReq,
   GetComicResp,
+  GetHistoryListResp,
   SearchComicReq,
   SearchComicResp,
+  UpsertHistoryReq,
 } from './types';
 import { Endpoints } from './types';
 
@@ -29,4 +31,12 @@ export function proxyImage(url: string) {
 
 export function checkPassword(data: CheckPasswordReq): Promise<CheckPasswordResp> {
   return post(Endpoints.CheckPassword, data);
+}
+
+export function getHistoryList(): Promise<GetHistoryListResp> {
+  return get(Endpoints.GetHistoryList);
+}
+
+export function upsertHistory(data: UpsertHistoryReq): Promise<void> {
+  return post(Endpoints.UpsertHistory, data);
 }

@@ -1,0 +1,31 @@
+[config]
+default_to_workspace = false
+
+[env.development]
+DATABASE_URL = "sqlite://dev.db?mode=rwc"
+
+[tasks.dev]
+condition = { profiles = ["development"] }
+install_crate = { crate_name = "bacon", binary = "bacon", test_arg = "--help" }
+command = "bacon"
+args = ["run"]
+
+[tasks.entity]
+condition = { profiles = ["development"] }
+install_crate = { crate_name = "sea-orm-cli", binary = "sea-orm-cli", test_arg = "--help" }
+command = "sea-orm-cli"
+args = ["generate", "entity", "--with-serde", "both", "-o", "entity/src"]
+
+[tasks.fresh]
+condition = { profiles = ["development"] }
+install_crate = { crate_name = "sea-orm-cli", binary = "sea-orm-cli", test_arg = "--help" }
+command = "sea-orm-cli"
+args = ["migrate", "fresh"]
+
+[env.production]
+DATABASE_URL = "sqlite://data/comiya.db?mode=rwc"
+
+[tasks.build]
+condition = { profiles = ["production"] }
+command = "cargo"
+args = ["build", "--release"]

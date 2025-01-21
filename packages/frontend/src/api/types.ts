@@ -6,6 +6,8 @@ export enum Endpoints {
   GetChapter = `${EndpointPrefix}/get_chapter`,
   ProxyImage = `${EndpointPrefix}/proxy_image`,
   CheckPassword = `${EndpointPrefix}/check_password`,
+  GetHistoryList = `${EndpointPrefix}/get_history_list`,
+  UpsertHistory = `${EndpointPrefix}/upsert_history`,
 }
 
 export interface ComicBrief {
@@ -64,4 +66,26 @@ export type CheckPasswordReq = {
 
 export type CheckPasswordResp = {
   valid: boolean;
+};
+
+export type HistoryItem = {
+  comicId: string;
+  chapterId: string;
+  comicName: string;
+  chapterName: string;
+  page: number;
+  visible: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type GetHistoryListResp = HistoryItem[];
+
+export type UpsertHistoryReq = {
+  comicId: string;
+  chapterId: string;
+  comicName: string;
+  chapterName: string;
+  page: number;
+  visible: boolean;
 };

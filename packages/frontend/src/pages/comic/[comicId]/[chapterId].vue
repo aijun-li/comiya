@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { getChapter, proxyImage } from '@/api';
+import { getChapter, proxyImage, upsertHistory } from '@/api';
 import ChapterGestureMask from '@/components/ChapterGestureMask.vue';
 import LazyImage from '@/components/LazyImage.vue';
 import { Slider } from '@/components/ui/slider';
 import { LocalStorageKey } from '@/types/const';
 import { useQuery, useQueryClient } from '@tanstack/vue-query';
-import { onKeyStroke, useDebounceFn, useLocalStorage } from '@vueuse/core';
+import { onKeyStroke, useDebounceFn, useEventListener, useLocalStorage } from '@vueuse/core';
 import {
   ArrowLeftToLine,
   ArrowRightToLine,
@@ -15,7 +15,7 @@ import {
   Pointer,
   Settings,
 } from 'lucide-vue-next';
-import { computed, ref, useTemplateRef, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 const route = useRoute('/comic/[comicId]/[chapterId]');
@@ -38,13 +38,19 @@ const hasPrev = computed(() => Boolean(data.value?.prevId && data.value.prevId !
 const activeIndex = ref([0]);
 const tempIndex = ref([0]);
 
-watch([comicId, chapterId], () => {
+watch([comicId, chapterId, route], () => {
   activeIndex.value = [0];
   tempIndex.value = [0];
-  listRef.value?.scrollTo({
-    top: 0,
-    behavior: 'instant',
-  });
+  scrollToPage(0);
+});
+
+watch(data, async () => {
+  const page = Number(route.query.page);
+
+  if (data.value && page > 0) {
+    await nextTick();
+    scrollToPage(page - 1);
+  }
 });
 
 const listRef = useTemplateRef('list-container');
@@ -157,6 +163,38 @@ watch(toEndDistance, () => {
     });
   }
 });
+
+// update watch history
+const historyDirty = ref(false);
+const checkTimer = ref(0);
+watch([comicId, chapterId, activeIndex], () => {
+  if (isFetching.value || !data.value) {
+    return;
+  }
+  historyDirty.value = true;
+});
+function update() {
+  if (historyDirty.value) {
+    upsertHistory({
+      comicId: comicId.value,
+      chapterId: chapterId.value,
+      page: activeIndex.value[0] + 1,
+      comicName: data.value?.comicName ?? '',
+      chapterName: data.value?.name ?? '',
+      visible: true,
+    }).finally(() => {
+      historyDirty.value = false;
+    });
+  }
+}
+onMounted(() => {
+  checkTimer.value = setInterval(update, 3000);
+});
+onUnmounted(() => {
+  update();
+  clearInterval(checkTimer.value);
+});
+useEventListener(window, 'beforeunload', update);
 </script>
 
 <template>
