@@ -26,7 +26,7 @@ const comics = computed(() => data.value || []);
     <div class="flex w-4/5 max-w-[600px] flex-col items-center gap-8">
       <div class="text-5xl font-semibold">Comiya</div>
       <div class="relative w-full">
-        <Input v-model="keyword" class="pr-9" autofocus />
+        <Input v-model="keyword" class="pr-9 text-base" autofocus />
         <LoaderCircle v-if="isFetching" class="absolute right-2 top-2 animate-spin" :size="20" />
       </div>
     </div>

@@ -5,7 +5,7 @@ import LazyImage from '@/components/LazyImage.vue';
 import { Slider } from '@/components/ui/slider';
 import { LocalStorageKey } from '@/types/const';
 import { useQuery, useQueryClient } from '@tanstack/vue-query';
-import { onKeyStroke, useDebounceFn, useEventListener, useLocalStorage } from '@vueuse/core';
+import { onKeyStroke, useDebounceFn, useEventListener, useLocalStorage, useMediaQuery } from '@vueuse/core';
 import {
   ArrowLeftToLine,
   ArrowRightToLine,
@@ -17,6 +17,8 @@ import {
 } from 'lucide-vue-next';
 import { computed, nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+
+const isPWA = useMediaQuery('(display-mode: fullscreen), (display-mode: standalone)');
 
 const route = useRoute('/comic/[comicId]/[chapterId]');
 const router = useRouter();
@@ -207,11 +209,12 @@ useEventListener(window, 'beforeunload', update);
     ref="list-container"
     class="scrollbar-hidden relative h-full w-full snap-y snap-mandatory overflow-auto outline-none"
   >
-    <div>
+    <div class="flex flex-col" :class="{ 'gap-[env(safe-area-inset-bottom)]': isPWA }">
       <LazyImage
         v-for="(image, index) in images"
         :key="image"
-        class="h-dvh w-dvw snap-start object-contain"
+        class="w-dvw snap-start object-contain"
+        :class="[isPWA ? 'h-[calc(100dvh_-_env(safe-area-inset-bottom))]' : 'h-dvh']"
         :src="proxyImage(image)"
         :index
         :active-index="activeIndex[0]"
@@ -241,7 +244,7 @@ useEventListener(window, 'beforeunload', update);
         "
       />
 
-      <div class="relative flex justify-center p-4 text-white">
+      <div class="relative flex justify-center p-4 text-white" :class="{ 'pb-[env(safe-area-inset-bottom)]': isPWA }">
         <div class="w-full max-w-[800px] rounded-lg bg-zinc-900 bg-opacity-20 shadow-lg backdrop-blur-md">
           <div class="flex w-full items-center">
             <div
