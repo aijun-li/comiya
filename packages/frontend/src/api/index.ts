@@ -1,12 +1,20 @@
 import { get, post } from './fetch';
 import type {
+  AddToLibraryReq,
+  CheckInLibraryReq,
+  CheckInLibraryResp,
   CheckPasswordReq,
   CheckPasswordResp,
+  DeleteHistoryReq,
   GetChapterReq,
   GetChapterResp,
+  GetComicHistoryReq,
+  GetComicHistoryResp,
   GetComicReq,
   GetComicResp,
-  GetHistoryListResp,
+  GetHistoryResp,
+  GetLibraryResp,
+  RemoveFromLibraryReq,
   SearchComicReq,
   SearchComicResp,
   UpsertHistoryReq,
@@ -33,10 +41,34 @@ export function checkPassword(data: CheckPasswordReq): Promise<CheckPasswordResp
   return post(Endpoints.CheckPassword, data);
 }
 
-export function getHistoryList(): Promise<GetHistoryListResp> {
-  return get(Endpoints.GetHistoryList);
+export function getHistory(): Promise<GetHistoryResp> {
+  return get(Endpoints.GetHistory);
 }
 
 export function upsertHistory(data: UpsertHistoryReq): Promise<void> {
   return post(Endpoints.UpsertHistory, data);
+}
+
+export function deleteHistory(data: DeleteHistoryReq): Promise<void> {
+  return post(Endpoints.DeleteHistory, data);
+}
+
+export function getLibrary(): Promise<GetLibraryResp> {
+  return get(Endpoints.GetLibrary);
+}
+
+export function addToLibrary(data: AddToLibraryReq): Promise<void> {
+  return post(Endpoints.AddToLibrary, data);
+}
+
+export function removeFromLibrary(data: RemoveFromLibraryReq): Promise<void> {
+  return post(Endpoints.RemoveFromLibrary, data);
+}
+
+export function checkInLibrary(params: CheckInLibraryReq): Promise<CheckInLibraryResp> {
+  return get(Endpoints.CheckInLibrary, params);
+}
+
+export function getComicHistory(params: GetComicHistoryReq): Promise<GetComicHistoryResp> {
+  return get(Endpoints.GetComicHistory, params);
 }

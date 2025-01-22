@@ -3,7 +3,7 @@ import { searchComic } from '@/api';
 import { Input } from '@/components/ui/input';
 import { useQuery } from '@tanstack/vue-query';
 import { useDebounce } from '@vueuse/core';
-import { History, LoaderCircle } from 'lucide-vue-next';
+import { History, LibraryBig, LoaderCircle } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import { RouterLink } from 'vue-router';
 
@@ -14,6 +14,7 @@ const { data, isFetching } = useQuery({
   queryKey: [searchComic.name, debounced],
   queryFn: () => searchComic({ keyword: debounced.value }),
   placeholderData: (prev) => prev,
+  refetchOnWindowFocus: false,
   enabled: () => Boolean(debounced.value.trim()),
 });
 
@@ -21,7 +22,7 @@ const comics = computed(() => data.value || []);
 </script>
 
 <template>
-  <div class="flex h-full w-full flex-col items-center px-12 py-16">
+  <div class="relative flex h-full w-full flex-col items-center px-12 py-16">
     <div class="transition-all duration-300" :class="[comics.length ? 'h-0' : 'h-1/4']" />
     <div class="flex w-4/5 max-w-[600px] flex-col items-center gap-8">
       <div class="text-5xl font-semibold">Comiya</div>
@@ -38,8 +39,14 @@ const comics = computed(() => data.value || []);
       </RouterLink>
     </div>
 
-    <RouterLink class="fixed right-6 top-6 p-2" to="/history">
-      <History />
-    </RouterLink>
+    <div class="absolute right-6 top-6 flex gap-2">
+      <RouterLink class="p-2" to="/library">
+        <LibraryBig />
+      </RouterLink>
+
+      <RouterLink class="p-2" to="/history">
+        <History />
+      </RouterLink>
+    </div>
   </div>
 </template>

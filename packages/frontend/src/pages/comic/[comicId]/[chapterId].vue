@@ -3,6 +3,7 @@ import { getChapter, proxyImage, upsertHistory } from '@/api';
 import ChapterGestureMask from '@/components/ChapterGestureMask.vue';
 import LazyImage from '@/components/LazyImage.vue';
 import { Slider } from '@/components/ui/slider';
+import { useActivated } from '@/hooks/activated';
 import { LocalStorageKey } from '@/types/const';
 import { useQuery, useQueryClient } from '@tanstack/vue-query';
 import { onKeyStroke, useDebounceFn, useEventListener, useLocalStorage, useMediaQuery } from '@vueuse/core';
@@ -19,6 +20,8 @@ import { computed, nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch 
 import { useRoute, useRouter } from 'vue-router';
 
 const isPWA = useMediaQuery('(display-mode: fullscreen), (display-mode: standalone)');
+
+const activated = useActivated();
 
 const route = useRoute('/comic/[comicId]/[chapterId]');
 const router = useRouter();
@@ -176,13 +179,13 @@ watch([comicId, chapterId, activeIndex], () => {
   historyDirty.value = true;
 });
 function update() {
-  if (historyDirty.value) {
+  if (historyDirty.value && data.value && comicId.value && chapterId.value && activated.value) {
     upsertHistory({
       comicId: comicId.value,
       chapterId: chapterId.value,
       page: activeIndex.value[0] + 1,
-      comicName: data.value?.comicName ?? '',
-      chapterName: data.value?.name ?? '',
+      comicName: data.value.comicName,
+      chapterName: data.value.name,
       visible: true,
     }).finally(() => {
       historyDirty.value = false;

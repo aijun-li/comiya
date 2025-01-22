@@ -39,6 +39,7 @@ pub struct Comic {
     pub intro: String,
     pub pub_date: String,
     pub chapter_groups: Vec<ComicChapterGroup>,
+    pub first_chapter_id: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -82,6 +83,14 @@ impl Site for Manhuagui {
             },
             id.clone(),
         );
+
+        let first_chapter_id = doc
+            .select_single(".book-btn a")
+            .attr_or("href", "")
+            .trim()
+            .trim_start_matches(&format!("/comic/{}/", id))
+            .trim_end_matches(".html")
+            .to_string();
 
         // check if there are hidden content due to audition
         let hidden_input = doc.select(r#"#erroraudit_show + input[type="hidden"]"#);
@@ -149,6 +158,7 @@ impl Site for Manhuagui {
             pub_date: brief.pub_date,
             intro: brief.intro,
             chapter_groups,
+            first_chapter_id,
         })
     }
 

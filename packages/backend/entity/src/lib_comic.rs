@@ -4,16 +4,13 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
-#[sea_orm(table_name = "history")]
+#[sea_orm(table_name = "lib_comic")]
 #[serde(rename_all = "camelCase")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    pub comic_id: String,
-    pub chapter_id: String,
-    pub comic_name: String,
-    pub chapter_name: String,
-    pub page: i32,
-    pub visible: bool,
+    pub id: String,
+    pub name: String,
+    pub cover: String,
     pub created_at: DateTimeUtc,
     pub updated_at: DateTimeUtc,
 }

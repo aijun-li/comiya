@@ -1,20 +1,30 @@
 <script setup lang="ts">
-import { getHistoryList } from '@/api';
+import { deleteHistory, getHistory } from '@/api';
 import { Button } from '@/components/ui/button';
+import { handleError } from '@/utils/error';
 import { useQuery } from '@tanstack/vue-query';
 import dayjs from 'dayjs';
-import { ChevronLeft } from 'lucide-vue-next';
+import { ChevronLeft, Trash2 } from 'lucide-vue-next';
 import { computed, onActivated } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
 
 const router = useRouter();
 
 const { data, refetch } = useQuery({
-  queryKey: [getHistoryList.name],
-  queryFn: () => getHistoryList(),
+  queryKey: [getHistory.name],
+  queryFn: () => getHistory(),
 });
 
-const items = computed(() => data.value ?? []);
+const items = computed(() => (data.value ?? []).filter((item) => item.visible));
+
+async function onDelete(comicId: string) {
+  try {
+    await deleteHistory({ comicId });
+    refetch();
+  } catch (error) {
+    handleError(error);
+  }
+}
 
 onActivated(refetch);
 </script>
@@ -28,15 +38,28 @@ onActivated(refetch);
     <RouterLink
       v-for="item in items"
       :key="item.comicId"
-      class="cursor-pointer rounded border p-4 shadow"
+      class="flex cursor-pointer gap-1 rounded border p-4 shadow"
       :to="`/comic/${item.comicId}/${item.chapterId}?page=${item.page}`"
     >
-      <div class="flex flex-col gap-1 sm:flex-row sm:gap-4">
-        <div class="font-semibold">{{ item.comicName }}</div>
+      <div class="min-w-0 flex-1">
+        <div class="flex flex-col gap-1 sm:flex-row sm:gap-4">
+          <div class="truncate font-semibold">{{ item.comicName }}</div>
 
-        <div>[{{ item.chapterName }}] (P{{ item.page }})</div>
+          <div class="truncate">[{{ item.chapterName }}] (P{{ item.page }})</div>
+        </div>
+        <div class="mt-2 truncate text-sm text-gray-400">
+          上次观看: {{ dayjs(item.updatedAt).format('YYYY/MM/DD HH:mm') }}
+        </div>
       </div>
-      <div class="mt-2 text-sm text-gray-400">上次观看: {{ dayjs(item.updatedAt).format('YYYY/MM/DD HH:mm') }}</div>
+
+      <Button
+        class="-translate-y-1.5 translate-x-2.5"
+        variant="ghost"
+        size="icon"
+        @click.stop.prevent="onDelete(item.comicId)"
+      >
+        <Trash2 />
+      </Button>
     </RouterLink>
   </div>
 </template>

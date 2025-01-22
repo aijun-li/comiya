@@ -6,8 +6,14 @@ export enum Endpoints {
   GetChapter = `${EndpointPrefix}/get_chapter`,
   ProxyImage = `${EndpointPrefix}/proxy_image`,
   CheckPassword = `${EndpointPrefix}/check_password`,
-  GetHistoryList = `${EndpointPrefix}/get_history_list`,
+  GetHistory = `${EndpointPrefix}/get_history`,
   UpsertHistory = `${EndpointPrefix}/upsert_history`,
+  DeleteHistory = `${EndpointPrefix}/delete_history`,
+  GetLibrary = `${EndpointPrefix}/get_library`,
+  AddToLibrary = `${EndpointPrefix}/add_to_library`,
+  RemoveFromLibrary = `${EndpointPrefix}/remove_from_library`,
+  CheckInLibrary = `${EndpointPrefix}/check_in_library`,
+  GetComicHistory = `${EndpointPrefix}/get_comic_history`,
 }
 
 export interface ComicBrief {
@@ -21,6 +27,7 @@ export interface ComicBrief {
 
 export interface Comic extends ComicBrief {
   chapterGroups: ComicChapterGroup[];
+  firstChapterId: string;
 }
 
 export interface ComicChapterBrief {
@@ -79,7 +86,7 @@ export type HistoryItem = {
   updatedAt: string;
 };
 
-export type GetHistoryListResp = HistoryItem[];
+export type GetHistoryResp = HistoryItem[];
 
 export type UpsertHistoryReq = {
   comicId: string;
@@ -88,4 +95,44 @@ export type UpsertHistoryReq = {
   chapterName: string;
   page: number;
   visible: boolean;
+};
+
+export type DeleteHistoryReq = {
+  comicId: string;
+};
+
+export type AddToLibraryReq = {
+  id: string;
+  name: string;
+  cover: string;
+};
+
+export type RemoveFromLibraryReq = {
+  id: string;
+};
+
+export type LibComic = {
+  id: string;
+  name: string;
+  cover: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type GetLibraryResp = LibComic[];
+
+export type CheckInLibraryReq = {
+  id: string;
+};
+
+export type CheckInLibraryResp = {
+  inLibrary: boolean;
+};
+
+export type GetComicHistoryReq = {
+  id: string;
+};
+
+export type GetComicHistoryResp = {
+  history?: HistoryItem;
 };
