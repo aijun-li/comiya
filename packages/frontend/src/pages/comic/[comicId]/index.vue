@@ -43,7 +43,7 @@ const { data: historyData } = useQuery({
 const history = computed(() => historyData.value?.history);
 
 function toRead() {
-  const chapterId = history.value ? `${history.value.chapterId}?page=${history.value.page}` ?? comic.value?.firstChapterId ?? '';
+  const chapterId = history.value ? `${history.value.chapterId}?page=${history.value.page}` : comic.value?.firstChapterId ?? '';
   if (chapterId) {
     router.push(`/comic/${comicId.value}/${chapterId}`);
   }
