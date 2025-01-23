@@ -25,7 +25,7 @@ watch(data, () => {
   if (data.value.valid) {
     cookies.set('comiya-password', password.value);
     if (route.name === '/password') {
-      router.replace('/');
+      router.replace('/search');
     }
   } else {
     router.replace('/password');
