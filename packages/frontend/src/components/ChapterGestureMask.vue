@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useDebounceFn } from '@vueuse/core';
 import { onMounted, onUnmounted, useTemplateRef } from 'vue';
 
 const props = defineProps<{
@@ -46,7 +47,7 @@ function inBox({ x, y }: { x: number; y: number }, el?: Element) {
   return x >= left && x <= right && y >= top && y <= bottom;
 }
 
-function listener(event: MouseEvent) {
+const listener = useDebounceFn((event: MouseEvent) => {
   if (!containerRef.value) {
     return;
   }
@@ -65,7 +66,7 @@ function listener(event: MouseEvent) {
     openMenu();
   }
   emit('click');
-}
+}, 100);
 
 onMounted(() => {
   setTimeout(() => {
