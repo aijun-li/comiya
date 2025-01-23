@@ -247,7 +247,10 @@ useEventListener(window, 'beforeunload', update);
         "
       />
 
-      <div class="relative flex justify-center p-4 text-white" :class="{ 'pb-[env(safe-area-inset-bottom)]': isPWA }">
+      <div
+        class="relative flex justify-center p-4 text-white"
+        :class="{ 'pb-[max(env(safe-area-inset-bottom),1rem)]': isPWA }"
+      >
         <div class="w-full max-w-[800px] rounded-lg bg-zinc-900 bg-opacity-20 shadow-lg backdrop-blur-md">
           <div class="flex w-full items-center">
             <div
