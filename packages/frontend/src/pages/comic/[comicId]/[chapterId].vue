@@ -264,7 +264,7 @@ useEventListener(window, 'beforeunload', update);
     >
       <LazyImage
         v-for="item in images"
-        :key="item.index"
+        :key="item.image"
         class="w-dvw flex-none snap-start object-contain"
         :class="[isPWA ? 'h-[calc(100dvh_-_env(safe-area-inset-bottom))]' : 'h-dvh']"
         styles="content-visibility:auto"
