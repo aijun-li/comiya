@@ -2,9 +2,10 @@
 import { getChapter, proxyImage, upsertHistory } from '@/api';
 import ChapterGestureMask from '@/components/ChapterGestureMask.vue';
 import LazyImage from '@/components/LazyImage.vue';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Slider } from '@/components/ui/slider';
 import { useActivated } from '@/hooks/activated';
-import { LocalStorageKey } from '@/types/const';
+import { LocalStorageKey, ReadDirection } from '@/types/const';
 import { useQuery, useQueryClient } from '@tanstack/vue-query';
 import { onKeyStroke, useDebounceFn, useEventListener, useLocalStorage, useMediaQuery } from '@vueuse/core';
 import {
@@ -15,6 +16,9 @@ import {
   LoaderCircle,
   Pointer,
   Settings,
+  SquareArrowDown,
+  SquareArrowLeft,
+  SquareArrowRight,
 } from 'lucide-vue-next';
 import { computed, nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -36,7 +40,17 @@ const { data, isFetching } = useQuery({
   gcTime: Infinity,
 });
 
-const images = computed(() => data.value?.images || []);
+const images = computed(() => {
+  const rawImages = (data.value?.images || []).map((image, index) => ({
+    image,
+    index,
+  }));
+  if (readDirection.value === ReadDirection.RightToLeft) {
+    return rawImages.reverse();
+  } else {
+    return rawImages;
+  }
+});
 const hasNext = computed(() => Boolean(data.value?.nextId && data.value.nextId !== '0'));
 const hasPrev = computed(() => Boolean(data.value?.prevId && data.value.prevId !== '0'));
 
@@ -50,11 +64,18 @@ watch([comicId, chapterId, route], () => {
 });
 
 watch(data, async () => {
+  if (!data.value) {
+    return;
+  }
+
   const page = Number(route.query.page);
 
-  if (data.value && page > 0) {
-    await nextTick();
+  await nextTick();
+
+  if (page > 0) {
     scrollToPage(page - 1);
+  } else if (readDirection.value === ReadDirection.RightToLeft) {
+    scrollToPage(0);
   }
 });
 
@@ -73,10 +94,24 @@ function onSlideEnd(index: number[]) {
 
 const controlMaskShow = ref(false);
 
+const readDirection = useLocalStorage(LocalStorageKey.ReadDirection, ReadDirection.TopToBottom);
 const gestureTipShowed = useLocalStorage(LocalStorageKey.GestureTipShowed, false);
+const gestureReverse = useLocalStorage(LocalStorageKey.GestureReverse, false);
 const showGestureTip = ref(!gestureTipShowed.value);
-const gestureReverse = ref(false);
 gestureTipShowed.value = true;
+
+const directionOptions = [
+  { title: '普通模式', value: ReadDirection.LeftToRight, icon: SquareArrowRight },
+  { title: '日漫模式', value: ReadDirection.RightToLeft, icon: SquareArrowLeft },
+  { title: '滚动模式', value: ReadDirection.TopToBottom, icon: SquareArrowDown },
+];
+
+async function onDirectionChange(direction: ReadDirection) {
+  readDirection.value = direction;
+  const oldIndex = activeIndex.value[0];
+  await nextTick();
+  scrollToPage(oldIndex);
+}
 
 const showNextTip = ref(false);
 const resetNextTip = useDebounceFn(() => {
@@ -88,8 +123,12 @@ const resetPrevTip = useDebounceFn(() => {
 }, 2000);
 
 function scrollToPage(index: number) {
+  const isHorizontal = readDirection.value !== ReadDirection.TopToBottom;
+  const field = isHorizontal ? 'left' : 'top';
+  const size = isHorizontal ? window.innerWidth : window.innerHeight;
+  const realIndex = readDirection.value === ReadDirection.RightToLeft ? images.value.length - 1 - index : index;
   listRef.value?.scrollTo({
-    top: window.innerHeight * Math.min(images.value.length - 1, Math.max(0, index)),
+    [field]: size * Math.min(images.value.length - 1, Math.max(0, realIndex)),
     behavior: 'instant',
   });
 }
@@ -210,20 +249,27 @@ useEventListener(window, 'beforeunload', update);
   <div
     v-else
     ref="list-container"
-    class="scrollbar-hidden relative h-full w-full snap-y snap-mandatory overflow-auto outline-none"
+    class="scrollbar-hidden relative h-full w-full snap-both snap-mandatory overflow-auto outline-none"
   >
-    <div class="flex flex-col" :class="{ 'gap-[env(safe-area-inset-bottom)]': isPWA }">
+    <div
+      class="flex"
+      :class="{
+        'gap-y-[env(safe-area-inset-bottom)]': isPWA,
+        'flex-col': readDirection === ReadDirection.TopToBottom,
+      }"
+    >
       <LazyImage
-        v-for="(image, index) in images"
-        :key="image"
-        class="w-dvw snap-start object-contain"
+        v-for="item in images"
+        :key="item.index"
+        class="w-dvw flex-none snap-start object-contain"
         :class="[isPWA ? 'h-[calc(100dvh_-_env(safe-area-inset-bottom))]' : 'h-dvh']"
-        :src="proxyImage(image)"
-        :index
+        styles="content-visibility:auto"
+        :src="proxyImage(item.image)"
+        :index="item.index"
         :active-index="activeIndex[0]"
         @activated="
-          activeIndex = [index];
-          tempIndex = [index];
+          activeIndex = [item.index];
+          tempIndex = [item.index];
         "
       />
     </div>
@@ -252,59 +298,78 @@ useEventListener(window, 'beforeunload', update);
         :class="{ 'pb-[max(env(safe-area-inset-bottom),1rem)]': isPWA }"
       >
         <div class="relative w-full max-w-[800px]">
-          <div class="w-full rounded-lg bg-zinc-900 bg-opacity-20 shadow-lg backdrop-blur-md">
-            <div class="flex w-full items-center">
-              <div
-                class="p-4"
-                :class="[hasPrev ? 'cursor-pointer' : 'cursor-not-allowed opacity-50']"
-                @click="toPreviousChapter"
-              >
-                <ArrowLeftToLine :size="28" />
+          <Collapsible as-child>
+            <div class="w-full rounded-lg bg-zinc-900 bg-opacity-20 shadow-lg backdrop-blur-md">
+              <div class="flex w-full items-center">
+                <div
+                  class="p-4"
+                  :class="[hasPrev ? 'cursor-pointer' : 'cursor-not-allowed opacity-40']"
+                  @click="toPreviousChapter"
+                >
+                  <ArrowLeftToLine :size="28" />
+                </div>
+
+                <Slider
+                  v-model="tempIndex"
+                  :min="0"
+                  :max="images.length - 1"
+                  @value-commit="onSlideEnd"
+                  @update:model-value="onSlideChange"
+                />
+
+                <div
+                  class="p-4"
+                  :class="[hasNext ? 'cursor-pointer' : 'cursor-not-allowed opacity-40']"
+                  @click="toNextChapter"
+                >
+                  <ArrowRightToLine :size="28" />
+                </div>
               </div>
 
-              <Slider
-                v-model="tempIndex"
-                :min="0"
-                :max="images.length - 1"
-                @value-commit="onSlideEnd"
-                @update:model-value="onSlideChange"
-              />
-
-              <div
-                class="p-4"
-                :class="[hasNext ? 'cursor-pointer' : 'cursor-not-allowed opacity-50']"
-                @click="toNextChapter"
-              >
-                <ArrowRightToLine :size="28" />
+              <div class="flex w-full items-center justify-between px-12 pb-2 text-sm">
+                <CollapsibleTrigger as-child>
+                  <div class="operation-btn">
+                    <Settings />
+                  </div>
+                </CollapsibleTrigger>
+                <div
+                  class="operation-btn"
+                  :class="{ '-scale-x-[1]': gestureReverse }"
+                  @click="
+                    controlMaskShow = false;
+                    showGestureTip = true;
+                    gestureReverse = !gestureReverse;
+                  "
+                >
+                  <Pointer />
+                </div>
+                <div
+                  class="operation-btn"
+                  @click="
+                    controlMaskShow = false;
+                    showGestureTip = true;
+                  "
+                >
+                  <BookOpenText />
+                </div>
               </div>
+
+              <CollapsibleContent>
+                <div class="full flex gap-4 px-4 pb-4 pt-2">
+                  <div
+                    v-for="option in directionOptions"
+                    :key="option.value"
+                    class="flex flex-1 cursor-pointer flex-col items-center gap-1 rounded border-[1.5px] border-white p-2 opacity-40"
+                    :class="{ '!opacity-100': readDirection === option.value }"
+                    @click="onDirectionChange(option.value)"
+                  >
+                    <component :is="option.icon" />
+                    {{ option.title }}
+                  </div>
+                </div>
+              </CollapsibleContent>
             </div>
-
-            <div class="flex w-full items-center justify-between px-12 pb-2 text-sm">
-              <div class="operation-btn">
-                <Settings />
-              </div>
-              <div
-                class="operation-btn"
-                :class="{ '-scale-x-[1]': gestureReverse }"
-                @click="
-                  controlMaskShow = false;
-                  showGestureTip = true;
-                  gestureReverse = !gestureReverse;
-                "
-              >
-                <Pointer />
-              </div>
-              <div
-                class="operation-btn"
-                @click="
-                  controlMaskShow = false;
-                  showGestureTip = true;
-                "
-              >
-                <BookOpenText />
-              </div>
-            </div>
-          </div>
+          </Collapsible>
           <div class="rainbow-mask pointer-events-none absolute inset-0 rounded-lg border border-transparent" />
         </div>
 
