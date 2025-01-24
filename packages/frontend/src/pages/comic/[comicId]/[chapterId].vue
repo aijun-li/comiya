@@ -251,58 +251,61 @@ useEventListener(window, 'beforeunload', update);
         class="relative flex justify-center p-4 text-white"
         :class="{ 'pb-[max(env(safe-area-inset-bottom),1rem)]': isPWA }"
       >
-        <div class="w-full max-w-[800px] rounded-lg bg-zinc-900 bg-opacity-20 shadow-lg backdrop-blur-md">
-          <div class="flex w-full items-center">
-            <div
-              class="p-4"
-              :class="[hasPrev ? 'cursor-pointer' : 'cursor-not-allowed opacity-50']"
-              @click="toPreviousChapter"
-            >
-              <ArrowLeftToLine :size="28" />
+        <div class="relative w-full max-w-[800px]">
+          <div class="w-full rounded-lg bg-zinc-900 bg-opacity-20 shadow-lg backdrop-blur-md">
+            <div class="flex w-full items-center">
+              <div
+                class="p-4"
+                :class="[hasPrev ? 'cursor-pointer' : 'cursor-not-allowed opacity-50']"
+                @click="toPreviousChapter"
+              >
+                <ArrowLeftToLine :size="28" />
+              </div>
+
+              <Slider
+                v-model="tempIndex"
+                :min="0"
+                :max="images.length - 1"
+                @value-commit="onSlideEnd"
+                @update:model-value="onSlideChange"
+              />
+
+              <div
+                class="p-4"
+                :class="[hasNext ? 'cursor-pointer' : 'cursor-not-allowed opacity-50']"
+                @click="toNextChapter"
+              >
+                <ArrowRightToLine :size="28" />
+              </div>
             </div>
 
-            <Slider
-              v-model="tempIndex"
-              :min="0"
-              :max="images.length - 1"
-              @value-commit="onSlideEnd"
-              @update:model-value="onSlideChange"
-            />
-
-            <div
-              class="p-4"
-              :class="[hasNext ? 'cursor-pointer' : 'cursor-not-allowed opacity-50']"
-              @click="toNextChapter"
-            >
-              <ArrowRightToLine :size="28" />
+            <div class="flex w-full items-center justify-between px-12 pb-2 text-sm">
+              <div class="operation-btn">
+                <Settings />
+              </div>
+              <div
+                class="operation-btn"
+                :class="{ '-scale-x-[1]': gestureReverse }"
+                @click="
+                  controlMaskShow = false;
+                  showGestureTip = true;
+                  gestureReverse = !gestureReverse;
+                "
+              >
+                <Pointer />
+              </div>
+              <div
+                class="operation-btn"
+                @click="
+                  controlMaskShow = false;
+                  showGestureTip = true;
+                "
+              >
+                <BookOpenText />
+              </div>
             </div>
           </div>
-
-          <div class="flex w-full items-center justify-between px-12 pb-2 text-sm">
-            <div class="operation-btn">
-              <Settings />
-            </div>
-            <div
-              class="operation-btn"
-              :class="{ '-scale-x-[1]': gestureReverse }"
-              @click="
-                controlMaskShow = false;
-                showGestureTip = true;
-                gestureReverse = !gestureReverse;
-              "
-            >
-              <Pointer />
-            </div>
-            <div
-              class="operation-btn"
-              @click="
-                controlMaskShow = false;
-                showGestureTip = true;
-              "
-            >
-              <BookOpenText />
-            </div>
-          </div>
+          <div class="rainbow-mask pointer-events-none absolute inset-0 rounded-lg border border-transparent" />
         </div>
 
         <div
@@ -349,5 +352,27 @@ useEventListener(window, 'beforeunload', update);
 <style scoped>
 .operation-btn {
   @apply flex cursor-pointer flex-col items-center gap-1 px-4 py-2;
+}
+
+.rainbow-mask {
+  mask:
+    linear-gradient(#000 0 0) padding-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab) border-box;
+  background-size: 400% 400%;
+  animation: gradient 10s ease infinite;
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 </style>
