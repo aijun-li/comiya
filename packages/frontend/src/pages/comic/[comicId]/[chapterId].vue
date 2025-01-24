@@ -5,6 +5,7 @@ import LazyImage from '@/components/LazyImage.vue';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Slider } from '@/components/ui/slider';
 import { useActivated } from '@/hooks/activated';
+import { usePreviousRoute } from '@/hooks/previous-route';
 import { LocalStorageKey, ReadDirection } from '@/types/const';
 import { useQuery, useQueryClient } from '@tanstack/vue-query';
 import { onKeyStroke, useDebounceFn, useEventListener, useLocalStorage, useMediaQuery } from '@vueuse/core';
@@ -29,6 +30,9 @@ const activated = useActivated();
 
 const route = useRoute('/comic/[comicId]/[chapterId]');
 const router = useRouter();
+
+const { previousRoute } = usePreviousRoute();
+const fromComic = computed(() => previousRoute.value?.name === '/comic/[comicId]/');
 
 const comicId = computed(() => route.params.comicId);
 const chapterId = computed(() => route.params.chapterId);
@@ -279,7 +283,7 @@ useEventListener(window, 'beforeunload', update);
       class="fixed inset-0 z-10 flex flex-col justify-between overscroll-contain bg-black bg-opacity-40"
     >
       <div class="flex h-12 items-center bg-zinc-900 text-white">
-        <div class="p-2" @click="router.go(-1)">
+        <div class="p-2" @click="router.back()">
           <ChevronLeft :size="28" />
         </div>
         <div class="min-w-0 flex-1 truncate">{{ data.comicName }} - {{ data.name }}</div>
@@ -347,7 +351,11 @@ useEventListener(window, 'beforeunload', update);
                   class="operation-btn"
                   @click="
                     controlMaskShow = false;
-                    showGestureTip = true;
+                    if (fromComic) {
+                      router.back();
+                    } else {
+                      router.replace(`/comic/${comicId}`);
+                    }
                   "
                 >
                   <BookOpenText />
