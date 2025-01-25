@@ -6,7 +6,7 @@ import { useActivated } from '@/hooks/activated';
 import { handleError } from '@/utils/error';
 import { useQuery } from '@tanstack/vue-query';
 import { ArrowDown01, ArrowDown10, ChevronLeft, LoaderCircle, Star } from 'lucide-vue-next';
-import { computed, ref, watch } from 'vue';
+import { computed, onActivated, ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 
 const route = useRoute('/comic/[comicId]/');
@@ -31,19 +31,23 @@ const { data: checkData, refetch: check } = useQuery({
   queryFn: () => checkInLibrary({ id: comicId.value }),
   enabled: () => Boolean(activated.value && comicId.value),
 });
+onActivated(check);
 
 const inLibrary = computed(() => checkData.value?.inLibrary ?? false);
 
-const { data: historyData } = useQuery({
+const { data: historyData, refetch: refetchHistory } = useQuery({
   queryKey: [getComicHistory.name, comicId],
   queryFn: () => getComicHistory({ id: comicId.value }),
   enabled: () => Boolean(activated.value && comicId.value),
 });
+onActivated(refetchHistory);
 
 const history = computed(() => historyData.value?.history);
 
 function toRead() {
-  const chapterId = history.value ? `${history.value.chapterId}?page=${history.value.page}` : comic.value?.firstChapterId ?? '';
+  const chapterId = history.value
+    ? `${history.value.chapterId}?page=${history.value.page}`
+    : (comic.value?.firstChapterId ?? '');
   if (chapterId) {
     router.push(`/comic/${comicId.value}/${chapterId}`);
   }

@@ -21,10 +21,28 @@ import {
   SquareArrowLeft,
   SquareArrowRight,
 } from 'lucide-vue-next';
-import { computed, nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
+import {
+  computed,
+  nextTick,
+  onActivated,
+  onDeactivated,
+  onMounted,
+  onUnmounted,
+  ref,
+  useTemplateRef,
+  watch,
+} from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 const isPWA = useMediaQuery('(display-mode: fullscreen), (display-mode: standalone)');
+
+onActivated(() => {
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#000');
+});
+
+onDeactivated(() => {
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#fff');
+});
 
 const activated = useActivated();
 
@@ -97,6 +115,9 @@ function onSlideEnd(index: number[]) {
 }
 
 const controlMaskShow = ref(false);
+onActivated(() => {
+  controlMaskShow.value = false;
+});
 
 const readDirection = useLocalStorage(LocalStorageKey.ReadDirection, ReadDirection.TopToBottom);
 const gestureTipShowed = useLocalStorage(LocalStorageKey.GestureTipShowed, false);
@@ -246,17 +267,17 @@ useEventListener(window, 'beforeunload', update);
 </script>
 
 <template>
-  <div v-if="!data" class="flex h-full w-full items-center justify-center">
+  <div v-if="!data || !activated" class="flex h-full w-full items-center justify-center bg-black text-white">
     <LoaderCircle class="animate-spin" />
   </div>
 
   <div
     v-else
     ref="list-container"
-    class="scrollbar-hidden relative h-full w-full snap-both snap-mandatory overflow-auto outline-none"
+    class="scrollbar-hidden relative h-full w-full snap-both snap-mandatory overflow-auto bg-black outline-none"
   >
     <div
-      class="flex"
+      class="flex bg-black"
       :class="{
         'gap-y-[env(safe-area-inset-bottom)]': isPWA,
         'flex-col': readDirection === ReadDirection.TopToBottom,
@@ -265,7 +286,7 @@ useEventListener(window, 'beforeunload', update);
       <LazyImage
         v-for="item in images"
         :key="item.image"
-        class="w-dvw flex-none snap-start object-contain"
+        class="w-dvw flex-none snap-start bg-black object-contain"
         :class="[isPWA ? 'h-[calc(100dvh_-_env(safe-area-inset-bottom))]' : 'h-dvh']"
         styles="content-visibility:auto"
         :src="proxyImage(item.image)"
@@ -278,32 +299,35 @@ useEventListener(window, 'beforeunload', update);
       />
     </div>
 
-    <div
-      v-if="controlMaskShow"
-      class="fixed inset-0 z-10 flex flex-col justify-between overscroll-contain bg-black bg-opacity-40"
-    >
-      <div class="flex h-12 items-center bg-zinc-900 text-white">
+    <Transition name="mask">
+      <div v-if="controlMaskShow" class="fixed left-0 right-0 top-0 z-10 flex h-12 items-center bg-black text-white">
         <div class="p-2" @click="router.back()">
           <ChevronLeft :size="28" />
         </div>
         <div class="min-w-0 flex-1 truncate">{{ data.comicName }} - {{ data.name }}</div>
       </div>
+    </Transition>
 
+    <Transition name="mask">
       <div
-        class="flex-1"
+        v-if="controlMaskShow"
+        class="fixed inset-0 overscroll-contain bg-black bg-opacity-40"
         @click="
           controlMaskShow = false;
           pageNavShow = false;
         "
       />
+    </Transition>
 
+    <Transition name="panel">
       <div
-        class="relative flex justify-center p-4 text-white"
+        v-if="controlMaskShow"
+        class="pointer-events-none fixed bottom-0 left-0 right-0 z-10 flex justify-center p-4 text-white"
         :class="{ 'pb-[max(env(safe-area-inset-bottom),1rem)]': isPWA }"
       >
-        <div class="relative w-full max-w-[800px]">
+        <div class="pointer-events-auto relative w-full max-w-[800px] rounded-lg">
           <Collapsible as-child>
-            <div class="w-full rounded-lg bg-zinc-900 bg-opacity-20 shadow-lg backdrop-blur-md">
+            <div class="w-full rounded-lg bg-[#27292C] bg-opacity-70 shadow-lg backdrop-blur-lg">
               <div class="flex w-full items-center">
                 <div
                   class="p-4"
@@ -383,17 +407,17 @@ useEventListener(window, 'beforeunload', update);
 
         <div
           v-if="pageNavShow"
-          class="absolute -top-4 left-1/2 min-w-20 -translate-x-1/2 rounded bg-zinc-900 bg-opacity-50 px-1 text-center text-white shadow-lg backdrop-blur-sm"
+          class="absolute -top-4 left-1/2 min-w-20 -translate-x-1/2 rounded bg-[#27292C] bg-opacity-70 px-1 text-center text-white shadow-lg backdrop-blur-md"
         >
           <span class="text-blue-400">{{ tempIndex[0] + 1 }}</span>
           /
           <span>{{ images.length }}</span>
         </div>
       </div>
-    </div>
+    </Transition>
 
     <ChapterGestureMask
-      v-else
+      v-if="!controlMaskShow"
       :show-tip="showGestureTip"
       :reverse="gestureReverse"
       @next-page="toNextPage"
@@ -407,7 +431,8 @@ useEventListener(window, 'beforeunload', update);
 
     <div
       v-if="showPrevTip || showNextTip"
-      class="fixed left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 rounded bg-black bg-opacity-30 px-2 py-1 text-white backdrop-blur-sm"
+      class="fixed left-1/2 top-1/2 z-20 -translate-x-1/2 rounded bg-black bg-opacity-30 px-2 py-1 text-white backdrop-blur-sm"
+      :class="[isPWA ? '-translate-y-[calc(50%_+_env(safe-area-inset-bottom))]' : '-translate-y-1/2']"
     >
       {{
         showPrevTip
@@ -447,5 +472,25 @@ useEventListener(window, 'beforeunload', update);
   100% {
     background-position: 0% 50%;
   }
+}
+
+.mask-enter-active,
+.mask-leave-active {
+  transition: all 0.3s ease;
+}
+
+.mask-enter-from,
+.mask-leave-to {
+  opacity: 0;
+}
+
+.panel-enter-active,
+.panel-leave-active {
+  transition: all 0.3s ease;
+}
+
+.panel-enter-from,
+.panel-leave-to {
+  transform: translateY(100%);
 }
 </style>
