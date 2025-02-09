@@ -108,7 +108,7 @@ watch(
       <ChevronLeft />
     </Button>
 
-    <div class="max-w-[1200px]">
+    <div class="w-full max-w-[1200px]">
       <div class="flex flex-col gap-4 sm:flex-row">
         <img :src="comic.cover" class="aspect-[3/4] max-w-[50%] self-start object-contain" />
         <div>
