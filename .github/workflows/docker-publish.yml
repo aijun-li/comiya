@@ -98,5 +98,9 @@ jobs:
       - name: Inspect image
         run: |
           docker buildx imagetools inspect ${{ env.DOCKERHUB_REPO }}:${{ steps.meta.outputs.version }}
-      - name: Notify
+      - name: Notify - Publish
         run: curl https://bark.bytecask.com/mapoos/Comiya%20Published
+      - name: Hook - Update Container
+        run: 'curl -H "Authorization: Bearer ${{ secrets.CONTAINER_UPDATE_TOKEN }}" https://update.bytecask.com/comiya'
+      - name: Notify - Update
+        run: curl https://bark.bytecask.com/mapoos/Comiya%20Updated

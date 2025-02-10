@@ -222,11 +222,18 @@ watch(toEndDistance, () => {
   if (toEndDistance.value < 5 && data.value) {
     queryClient.prefetchQuery({
       queryKey: [getChapter.name, comicId.value, data.value.nextId],
-      queryFn: () =>
-        getChapter({
+      queryFn: async () => {
+        const nextChapter = await getChapter({
           comicId: comicId.value,
           chapterId: data.value.nextId,
-        }),
+        });
+
+        nextChapter.images.slice(0, 5).forEach((image) => {
+          fetch(proxyImage(image), { priority: 'low' });
+        });
+
+        return nextChapter;
+      },
       staleTime: Infinity,
       gcTime: Infinity,
     });
